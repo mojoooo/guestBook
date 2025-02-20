@@ -20,12 +20,12 @@ public class GuestBookServlet extends HttpServlet
 {
     private List<GuestBook> entries;
 
-    public List<GuestBook> getAllEntries()
+    public synchronized List<GuestBook> getAllEntries()
     {
         return entries;
     }
 
-    public void setEntry(GuestBook entry)
+    public synchronized void addEntry(GuestBook entry)
     {
         this.entries.add(entry);
     }
@@ -37,7 +37,7 @@ public class GuestBookServlet extends HttpServlet
         this.entries = new ArrayList<GuestBook>();
         
         GuestBook entry1 = new GuestBook("Ich", new Date(), "war hier am 20.02.25");
-        this.setEntry(entry1);
+        this.addEntry(entry1);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class GuestBookServlet extends HttpServlet
             }
 
             GuestBook newEntry = new GuestBook(name, date, content);
-            this.setEntry(newEntry);
+            this.addEntry(newEntry);
         }
         
         this.showHTML(req, resp);
@@ -87,13 +87,16 @@ public class GuestBookServlet extends HttpServlet
         out.println("<body>");
         out.println("<h1>Guestbook</h1>");
         
-        for (GuestBook entry : this.getAllEntries())
+        synchronized (this)
         {
-            out.println("<div style='border: 2px solid black; padding: 15px; margin: 10px 0; width: 400px; border-radius: 8px; background-color: #f9f9f9;'>");
-            out.println("<p><strong>Name:</strong> " + entry.getName() + "</p>");
-            out.println("<p><strong>Reisedatum:</strong> " + entry.getDate() + "</p>");
-            out.println("<p><strong>Nachricht:</strong><br>" + entry.getContent() + "</p>");
-            out.println("</div>");
+            for (GuestBook entry : this.getAllEntries())
+            {
+                out.println("<div style='border: 2px solid black; padding: 15px; margin: 10px 0; width: 400px; border-radius: 8px; background-color: #f9f9f9;'>");
+                out.println("<p><strong>Name:</strong> " + entry.getName() + "</p>");
+                out.println("<p><strong>Reisedatum:</strong> " + entry.getDate() + "</p>");
+                out.println("<p><strong>Nachricht:</strong><br>" + entry.getContent() + "</p>");
+                out.println("</div>");
+            }
         }
         
         String login = (String) req.getSession().getAttribute("login");
